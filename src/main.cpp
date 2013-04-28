@@ -6,14 +6,19 @@
 
 #include <cv.h>
 #include <highgui.h>
+#include <string>
 #include <sstream>
+
 
 using namespace cv;
 
-int
-main(void)
-{
+
+void 
+do_flow(std::string fname) {
+  
   namedWindow("seq", CV_WINDOW_AUTOSIZE);
+  
+  
 
   // iterate one less than number of frames
   for (int fi=7; fi<14; ++fi) {
@@ -60,7 +65,20 @@ main(void)
     
     
   } // for fi
+
   
+}
+
+int
+main(int argc, char **argv)
+{
+  std:string path = "../Walking";
+  
+  if (argc>1) {
+    path = argv[1];
+  }
+  
+  do_flow(path);
 
   return 0;
 }
