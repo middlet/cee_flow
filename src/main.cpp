@@ -8,26 +8,34 @@
 #include <highgui.h>
 #include <string>
 #include <sstream>
+#include <boost/filesystem.hpp>
+#include <iterator>
+#include <vector>
+#include <algorithm>
 
 
+using namespace boost::filesystem;
 using namespace cv;
 
 
 void 
-do_flow(std::string fname) {
+do_flow(std::string dname) {
   
   namedWindow("seq", CV_WINDOW_AUTOSIZE);
   
+  // get the files in the directory
+  path p(dname);
+  std::vector<path> files;
+  copy(directory_iterator(p), directory_iterator(), back_inserter(files));
+  sort(files.begin(), files.end()); 
   
-
   // iterate one less than number of frames
-  for (int fi=7; fi<14; ++fi) {
-    std::ostringstream cfname, nfname;
-    cfname << "../Walking/frame" << std::setw(2) << std::setfill('0') << fi << ".png";
-    nfname << "../Walking/frame" << std::setw(2) << std::setfill('0') << (fi+1) << ".png";
+  for (uint fi=0; fi<files.size()-1; ++fi) {
+    std::string cfname = files[fi].string();
+    std::string nfname = files[fi+1].string();
     // get the current and next frame
-    Mat cimage = imread(cfname.str());
-    Mat nimage = imread(nfname.str());
+    Mat cimage = imread(cfname);
+    Mat nimage = imread(nfname);
     // grayscale image
     Mat cimage_g, nimage_g;
     cvtColor(cimage, cimage_g, CV_RGB2GRAY );
@@ -39,9 +47,6 @@ do_flow(std::string fname) {
     goodFeaturesToTrack(cimage_g, ccorners, max_corners,
       0.1, 10, noArray(), 3, false
     );
-    //goodFeaturesToTrack(nimage_g, ncorners, max_corners,
-    //  0.1, 10, noArray(), 3, false
-    //);
     // do optical flow
     int winsize = 11;
     int maxlvl = 5;
@@ -49,7 +54,6 @@ do_flow(std::string fname) {
     vector<float> error;
     calcOpticalFlowPyrLK(cimage_g, nimage_g, ccorners,
 			 ncorners, status, error, Size(winsize, winsize), maxlvl);
-    
     // draw features on image
     for (uint ci=0; ci<ccorners.size(); ci++) {
       circle(cimage, ccorners[ci], 1, Scalar(0,255,0), 1);
@@ -61,18 +65,15 @@ do_flow(std::string fname) {
     
     // show results
     imshow("seq", cimage);
-    waitKey(0);
-    
-    
+    waitKey(250);
   } // for fi
-
   
 }
 
 int
 main(int argc, char **argv)
 {
-  std:string path = "../Walking";
+  std::string path = "../Walking";
   
   if (argc>1) {
     path = argv[1];
